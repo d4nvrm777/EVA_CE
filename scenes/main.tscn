@@ -1,9 +1,11 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/eva.tscn" id="1_eva"]
 [ext_resource type="Script" path="res://scripts/eva/eva_camera.gd" id="2_cam"]
 [ext_resource type="Script" path="res://scripts/world/city_generator.gd" id="3_city"]
 [ext_resource type="Script" path="res://scripts/ui/debug_hud.gd" id="4_hud"]
+[ext_resource type="PackedScene" path="res://scenes/angel_dummy.tscn" id="5_angel"]
+[ext_resource type="Script" path="res://scripts/ui/combat_hud.gd" id="6_combat_hud"]
 
 [sub_resource type="ProceduralSkyMaterial" id="Sky_mat"]
 sky_top_color = Color(0.32, 0.45, 0.68, 1)
@@ -61,12 +63,15 @@ script = ExtResource("3_city")
 [node name="Input" parent="Eva" node_paths=PackedStringArray("camera_rig")]
 camera_rig = NodePath("../../CameraRig")
 
+[node name="AngelDummy" parent="." instance=ExtResource("5_angel")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, -70)
+
 [node name="CameraRig" type="Node3D" parent="." node_paths=PackedStringArray("target")]
 script = ExtResource("2_cam")
 target = NodePath("../Eva")
 
 [node name="SpringArm3D" type="SpringArm3D" parent="CameraRig"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, 0)
 collision_mask = 9
 spring_length = 48.0
 margin = 2.0
@@ -84,3 +89,16 @@ offset_right = 600.0
 offset_bottom = 200.0
 script = ExtResource("4_hud")
 eva = NodePath("../../Eva")
+
+[node name="CombatHUD" type="Control" parent="HUD" node_paths=PackedStringArray("eva", "angel", "camera_rig")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("6_combat_hud")
+eva = NodePath("../../Eva")
+angel = NodePath("../../AngelDummy")
+camera_rig = NodePath("../../CameraRig")
