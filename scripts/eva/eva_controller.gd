@@ -1,0 +1,107 @@
+class_name EvaController
+extends CharacterBody3D
+## Movimiento pesado en tercera persona. El Eva gira con velocidad limitada y
+## sólo avanza hacia donde mira, así que cambiar de dirección cuesta tiempo.
+
+signal footstep(strength: float)
+signal landed(strength: float)
+
+@export var input_source: LocalInput
+
+@export_group("Velocidad")
+@export var walk_speed := 14.0          ## m/s (el Eva mide ~40 m)
+@export var sprint_speed := 30.0
+@export var acceleration := 7.0         ## m/s²
+@export var deceleration := 10.0
+@export var turn_speed_deg := 110.0     ## grados por segundo
+
+@export_group("Salto y gravedad")
+@export var jump_velocity := 22.0
+@export var gravity_scale := 2.2
+
+@export_group("Pasos")
+@export var stride_length := 16.0       ## metros entre pisadas
+
+@export_group("Choques")
+@export var building_break_speed := 18.0  ## velocidad mínima para derribar un edificio
+
+var _stride_progress := 0.0
+var _was_on_floor := true
+var _last_fall_speed := 0.0
+@onready var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity") * gravity_scale
+
+
+func _physics_process(delta: float) -> void:
+	var input := input_source.get_input() if input_source else EvaInput.new()
+	simulate(input, delta)
+
+
+func simulate(input: EvaInput, delta: float) -> void:
+	var on_floor := is_on_floor()
+
+	if not on_floor:
+		velocity.y -= _gravity * delta
+		_last_fall_speed = -velocity.y
+	elif input.jump:
+		velocity.y = jump_velocity
+
+	var move_strength := minf(input.move.length(), 1.0)
+	var horizontal := Vector3(velocity.x, 0.0, velocity.z)
+
+	if move_strength > 0.0:
+		var wish_dir := Vector3(input.move.x, 0.0, input.move.y).rotated(Vector3.UP, input.camera_yaw).normalized()
+		_turn_towards(wish_dir, delta)
+		# Avanza en la dirección que mira; si el input apunta detrás, frena en vez de patinar.
+		var forward := -global_basis.z
+		var alignment := clampf(forward.dot(wish_dir), 0.0, 1.0)
+		var top_speed := sprint_speed if input.sprint else walk_speed
+		var target := forward * top_speed * move_strength * alignment
+		horizontal = horizontal.move_toward(target, acceleration * delta)
+	else:
+		horizontal = horizontal.move_toward(Vector3.ZERO, deceleration * delta)
+
+	velocity.x = horizontal.x
+	velocity.z = horizontal.z
+	var pre_slide_velocity := velocity
+	move_and_slide()
+
+	_handle_impacts(pre_slide_velocity)
+	_handle_footsteps(on_floor, horizontal.length(), delta)
+
+	if is_on_floor() and not _was_on_floor:
+		landed.emit(clampf(_last_fall_speed / 40.0, 0.0, 1.0))
+	_was_on_floor = is_on_floor()
+
+
+func horizontal_speed() -> float:
+	return Vector2(velocity.x, velocity.z).length()
+
+
+func _turn_towards(dir: Vector3, delta: float) -> void:
+	var target_yaw := atan2(-dir.x, -dir.z)
+	var diff := wrapf(target_yaw - rotation.y, -PI, PI)
+	var max_step := deg_to_rad(turn_speed_deg) * delta
+	rotation.y += clampf(diff, -max_step, max_step)
+
+
+func _handle_impacts(pre_slide_velocity: Vector3) -> void:
+	var impact_speed := Vector2(pre_slide_velocity.x, pre_slide_velocity.z).length()
+	if impact_speed < building_break_speed:
+		return
+	for i in get_slide_collision_count():
+		var collision := get_slide_collision(i)
+		var collider := collision.get_collider()
+		if collider and collider.has_method("take_impact"):
+			collider.take_impact(pre_slide_velocity, collision.get_position())
+			# El choque no te frena del todo: atraviesas el edificio que se derrumba.
+			velocity = pre_slide_velocity * 0.6
+
+
+func _handle_footsteps(on_floor: bool, speed: float, delta: float) -> void:
+	if not on_floor or speed < 1.0:
+		_stride_progress = 0.0
+		return
+	_stride_progress += speed * delta
+	if _stride_progress >= stride_length:
+		_stride_progress -= stride_length
+		footstep.emit(clampf(speed / sprint_speed, 0.3, 1.0))

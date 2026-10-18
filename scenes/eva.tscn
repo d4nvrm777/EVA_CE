@@ -1,0 +1,58 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/eva/eva_controller.gd" id="1_ctrl"]
+[ext_resource type="Script" path="res://scripts/eva/local_input.gd" id="2_input"]
+
+[sub_resource type="CapsuleShape3D" id="Shape_body"]
+radius = 7.0
+height = 40.0
+
+[sub_resource type="StandardMaterial3D" id="Mat_armor"]
+albedo_color = Color(0.36, 0.14, 0.58, 1)
+roughness = 0.6
+
+[sub_resource type="StandardMaterial3D" id="Mat_accent"]
+albedo_color = Color(0.45, 0.95, 0.3, 1)
+emission_enabled = true
+emission = Color(0.3, 0.8, 0.2, 1)
+
+[sub_resource type="CapsuleMesh" id="Mesh_body"]
+material = SubResource("Mat_armor")
+radius = 7.0
+height = 40.0
+
+[sub_resource type="BoxMesh" id="Mesh_head"]
+material = SubResource("Mat_armor")
+size = Vector3(6, 7, 8)
+
+[sub_resource type="BoxMesh" id="Mesh_visor"]
+material = SubResource("Mat_accent")
+size = Vector3(4, 1.5, 1)
+
+[node name="Eva" type="CharacterBody3D" node_paths=PackedStringArray("input_source")]
+collision_layer = 2
+collision_mask = 9
+floor_snap_length = 2.0
+script = ExtResource("1_ctrl")
+input_source = NodePath("Input")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 20, 0)
+shape = SubResource("Shape_body")
+
+[node name="Model" type="Node3D" parent="."]
+
+[node name="Body" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 20, 0)
+mesh = SubResource("Mesh_body")
+
+[node name="Head" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 41, -1)
+mesh = SubResource("Mesh_head")
+
+[node name="Visor" type="MeshInstance3D" parent="Model/Head"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, -4.2)
+mesh = SubResource("Mesh_visor")
+
+[node name="Input" type="Node" parent="."]
+script = ExtResource("2_input")
