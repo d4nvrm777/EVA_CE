@@ -1,11 +1,7 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/eva/eva_controller.gd" id="1_ctrl"]
 [ext_resource type="Script" path="res://scripts/eva/local_input.gd" id="2_input"]
-[ext_resource type="Script" path="res://scripts/eva/eva_combat.gd" id="3_combat"]
-[ext_resource type="Script" path="res://scripts/eva/eva_visuals.gd" id="4_visuals"]
-[ext_resource type="Script" path="res://scripts/eva/eva_power.gd" id="5_power"]
-[ext_resource type="Script" path="res://scripts/eva/umbilical_cable.gd" id="6_cable"]
 
 [sub_resource type="CapsuleShape3D" id="Shape_body"]
 radius = 7.0
@@ -33,23 +29,18 @@ size = Vector3(6, 7, 8)
 material = SubResource("Mat_accent")
 size = Vector3(4, 1.5, 1)
 
-[node name="Eva" type="CharacterBody3D" groups=["eva"] node_paths=PackedStringArray("input_source", "combat", "power")]
+[node name="Eva" type="CharacterBody3D" groups=["eva"] node_paths=PackedStringArray("input_source")]
 collision_layer = 2
-collision_mask = 25
+collision_mask = 9
 floor_snap_length = 2.0
 script = ExtResource("1_ctrl")
 input_source = NodePath("Input")
-combat = NodePath("Combat")
-power = NodePath("Power")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 20, 0)
 shape = SubResource("Shape_body")
 
-[node name="Model" type="Node3D" parent="." node_paths=PackedStringArray("combat", "power")]
-script = ExtResource("4_visuals")
-combat = NodePath("../Combat")
-power = NodePath("../Power")
+[node name="Model" type="Node3D" parent="."]
 
 [node name="Body" type="MeshInstance3D" parent="Model"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 20, 0)
@@ -65,13 +56,3 @@ mesh = SubResource("Mesh_visor")
 
 [node name="Input" type="Node" parent="."]
 script = ExtResource("2_input")
-
-[node name="Combat" type="Node" parent="."]
-script = ExtResource("3_combat")
-
-[node name="Power" type="Node" parent="."]
-script = ExtResource("5_power")
-
-[node name="Cable" type="Node3D" parent="." node_paths=PackedStringArray("power")]
-script = ExtResource("6_cable")
-power = NodePath("../Power")
