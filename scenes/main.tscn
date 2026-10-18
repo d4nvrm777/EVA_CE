@@ -66,13 +66,13 @@ script = ExtResource("2_cam")
 target = NodePath("../Eva")
 
 [node name="SpringArm3D" type="SpringArm3D" parent="CameraRig"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 0, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, 0)
 collision_mask = 9
-spring_length = 75.0
+spring_length = 48.0
 margin = 2.0
 
 [node name="Camera3D" type="Camera3D" parent="CameraRig/SpringArm3D"]
-fov = 65.0
+fov = 72.0
 far = 6000.0
 
 [node name="HUD" type="CanvasLayer" parent="."]
