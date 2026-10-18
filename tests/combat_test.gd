@@ -22,10 +22,17 @@ var failures: Array[String] = []
 
 func _initialize() -> void:
 	var main: Node = load("res://scenes/main.tscn").instantiate()
+	# Estas pruebas usan el Ángel de prueba en lugar de Sachiel.
+	var sachiel := main.get_node("Angel")
+	main.remove_child(sachiel)
+	sachiel.free()
+	angel = load("res://scenes/angel_dummy.tscn").instantiate()
+	angel.transform = Transform3D(Basis(Vector3.UP, PI), Vector3(0, 0, -70))
+	main.add_child(angel)
+	main.get_node("HUD/CombatHUD").angel = angel
 	root.add_child(main)
 	await process_frame
 	eva = main.get_node("Eva")
-	angel = main.get_node("AngelDummy")
 	eva.add_child(scripted)
 	eva.input_source = scripted
 
@@ -88,7 +95,7 @@ func _test_parry() -> void:
 	print("Parry:")
 	await _setup(true, 0.3)
 	scripted.script_fn = func(input: EvaInput) -> void:
-		input.at_field = angel.state == AngelDummy.State.WINDUP and angel.windup_left < 0.12
+		input.at_field = angel.state == Angel.State.WINDUP and angel.windup_left < 0.12
 	await _run(2.0)
 	_check(angel.parried_count >= 1, "levantar el AT Field justo antes del golpe hace parry")
 	_check(eva.combat.health == eva.combat.max_health, "el parry no hace daño al Eva")

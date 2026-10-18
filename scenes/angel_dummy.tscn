@@ -2,5 +2,5 @@
 
 [ext_resource type="Script" path="res://scripts/enemies/angel_dummy.gd" id="1_angel"]
 
-[node name="AngelDummy" type="StaticBody3D"]
+[node name="AngelDummy" type="CharacterBody3D"]
 script = ExtResource("1_angel")

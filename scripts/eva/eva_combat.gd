@@ -145,7 +145,7 @@ func simulate(input: EvaInput, delta: float) -> void:
 func receive_hit(info: HitInfo) -> HitInfo.Result:
 	if state == State.DOWN:
 		return HitInfo.Result.BLOCKED
-	if state == State.GUARD and info.is_frontal(body):
+	if state == State.GUARD and not info.unblockable and info.is_frontal(body):
 		var result := HitInfo.Result.PARRIED if guard_time <= parry_window else HitInfo.Result.BLOCKED
 		pending_impulse += info.knockback * guard_knockback_scale
 		_hitstop = info.hitstop
