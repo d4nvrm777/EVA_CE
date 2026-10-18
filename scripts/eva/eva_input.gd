@@ -10,3 +10,4 @@ var jump := false
 var attack_light := false   ## pulsado este frame
 var attack_heavy := false   ## pulsado este frame
 var at_field := false       ## mantenido
+var cable := false          ## pulsado este frame: conectar / soltar cable
