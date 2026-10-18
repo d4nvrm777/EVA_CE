@@ -5,6 +5,7 @@ extends Node3D
 const AT_COLOR := Color(1.0, 0.55, 0.1, 0.35)
 
 @export var combat: EvaCombat
+@export var power: EvaPower
 
 var _knife_pivot: Node3D
 var _at_field: MeshInstance3D
@@ -18,6 +19,9 @@ func _ready() -> void:
 	combat.attack_started.connect(_on_attack_started)
 	combat.state_changed.connect(_on_state_changed)
 	combat.guarded.connect(_on_guarded)
+	if power:
+		power.shut_down.connect(_tilt.bind(Vector3(25, 0, 0)))  # sin energía: se queda caído hacia delante
+		power.restarted.connect(_tilt.bind(Vector3.ZERO))
 	combat.hit_landed.connect(func(result: HitInfo.Result, info: HitInfo) -> void: HitSpark.spawn(self, info.point, result))
 	combat.damaged.connect(func(info: HitInfo) -> void: HitSpark.spawn(self, info.point, HitInfo.Result.HIT))
 
@@ -98,8 +102,14 @@ func _on_state_changed(state: EvaCombat.State) -> void:
 	if state == EvaCombat.State.GUARD:
 		_at_field.scale = Vector3(0.6, 1, 0.6)
 		create_tween().tween_property(_at_field, "scale", Vector3.ONE, 0.08)
-	var tilt := Vector3(80, 0, 0) if state == EvaCombat.State.DOWN else Vector3.ZERO
-	create_tween().tween_property(self, "rotation_degrees", tilt, 0.5).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	if state == EvaCombat.State.DOWN:
+		_tilt(Vector3(80, 0, 0))
+	elif rotation_degrees.x > 50.0:
+		_tilt(Vector3.ZERO)
+
+
+func _tilt(target: Vector3) -> void:
+	create_tween().tween_property(self, "rotation_degrees", target, 0.5).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
 
 
 func _on_guarded(result: HitInfo.Result) -> void:

@@ -9,6 +9,7 @@ signal smashed(strength: float)
 
 @export var input_source: LocalInput
 @export var combat: EvaCombat
+@export var power: EvaPower
 
 @export_group("Velocidad")
 @export var walk_speed := 32.0          ## m/s (el Eva mide ~40 m)
@@ -39,13 +40,19 @@ func _physics_process(delta: float) -> void:
 
 
 func simulate(input: EvaInput, delta: float) -> void:
+	if power:
+		power.simulate(input, combat.state if combat else EvaCombat.State.FREE, delta)
+		if not power.can_act():
+			input = EvaInput.new()  # conectándose o sin energía: no responde
 	var scale := Vector2.ONE
 	var lunge := 0.0
+	var free := true  # sin atacar, bloquear ni aturdido: puede saltar y correr
 	if combat:
 		combat.simulate(input, delta)
 		if combat.in_hitstop():
 			return  # congelado unos frames para que el golpe pese
 		scale = combat.movement_scale()
+		free = combat.state == EvaCombat.State.FREE
 		lunge = combat.lunge_speed()
 		velocity += combat.pending_impulse
 		combat.pending_impulse = Vector3.ZERO
@@ -55,7 +62,7 @@ func simulate(input: EvaInput, delta: float) -> void:
 	if not on_floor:
 		velocity.y -= _gravity * delta
 		_last_fall_speed = -velocity.y
-	elif input.jump and scale.x >= 1.0:
+	elif input.jump and free:
 		velocity.y = jump_velocity
 
 	var move_strength := minf(input.move.length(), 1.0)
@@ -69,7 +76,7 @@ func simulate(input: EvaInput, delta: float) -> void:
 		# Avanza en la dirección que mira; si el input apunta detrás, frena en vez de patinar.
 		var forward := -global_basis.z
 		var alignment := clampf(forward.dot(wish_dir), 0.0, 1.0)
-		var top_speed := (sprint_speed if input.sprint and scale.x >= 1.0 else walk_speed) * scale.x
+		var top_speed := (sprint_speed if input.sprint and free else walk_speed) * scale.x
 		var target := forward * top_speed * move_strength * alignment
 		horizontal = horizontal.move_toward(target, acceleration * delta)
 	else:
@@ -79,6 +86,8 @@ func simulate(input: EvaInput, delta: float) -> void:
 	velocity.z = horizontal.z
 	var pre_slide_velocity := velocity
 	move_and_slide()
+	if power:
+		power.apply_tether()
 
 	_handle_impacts(pre_slide_velocity)
 	_handle_footsteps(on_floor, horizontal.length(), delta)

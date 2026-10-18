@@ -14,4 +14,5 @@ func get_input() -> EvaInput:
 	input.attack_light = Input.is_action_just_pressed("attack_light")
 	input.attack_heavy = Input.is_action_just_pressed("attack_heavy")
 	input.at_field = Input.is_action_pressed("at_field")
+	input.cable = Input.is_action_just_pressed("cable")
 	return input

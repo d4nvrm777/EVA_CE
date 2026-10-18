@@ -20,9 +20,10 @@ func _initialize() -> void:
 	var city: Node3D = main.get_node("City")
 	# Primer edificio al norte de la plaza central: hay pista libre para coger velocidad.
 	var target: Building
-	for b: Building in city.get_children():
-		if absf(b.position.x) < 50.0 and b.position.z < 0.0 and (target == null or b.position.z > target.position.z):
+	for b in city.get_children():
+		if b is Building and absf(b.position.x) < 50.0 and b.position.z < 0.0 and (target == null or b.position.z > target.position.z):
 			target = b
+	eva.power.disconnect_cable(false)  # sin cable para poder correr lejos
 	eva.global_position = Vector3(target.position.x, 0, 0)
 	var scripted := ScriptedInput.new()
 	eva.add_child(scripted)

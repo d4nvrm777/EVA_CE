@@ -9,6 +9,12 @@ extends Node3D
 @export var max_height := 45.0
 @export var tower_chance := 0.08       ## algunos rascacielos sueltos
 @export var tower_height := Vector2(60.0, 90.0)
+## Enchufes para el cable umbilical, en cruces de calles (múltiplos de block_spacing).
+@export var socket_positions: Array[Vector3] = [
+	Vector3(0, 0, 60),
+	Vector3(165, 0, 165), Vector3(-165, 0, 165), Vector3(165, 0, -165), Vector3(-165, 0, -165),
+	Vector3(330, 0, 0), Vector3(-330, 0, 0), Vector3(0, 0, 330), Vector3(0, 0, -330),
+]
 
 
 func _ready() -> void:
@@ -29,3 +35,8 @@ func _ready() -> void:
 			building.color = Color(shade, shade, shade * 1.05)
 			building.position = Vector3((gx + 0.5) * block_spacing, 0.0, (gz + 0.5) * block_spacing)
 			add_child(building)
+
+	for pos in socket_positions:
+		var socket := PowerSocket.new()
+		socket.position = pos
+		add_child(socket)
