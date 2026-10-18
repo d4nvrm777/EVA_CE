@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="AttackData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/attack_data.gd" id="1_attack"]
+
+[resource]
+script = ExtResource("1_attack")
+display_name = "Estocada"
+damage = 22.0
+at_damage = 30.0
+startup = 0.35
+active = 0.12
+recovery = 0.5
+reach = 20.0
+radius = 16.0
+lunge_speed = 40.0
+hitstop = 0.14
+knockback = 40.0
+stagger = 0.9

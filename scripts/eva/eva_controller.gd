@@ -8,6 +8,7 @@ signal landed(strength: float)
 signal smashed(strength: float)
 
 @export var input_source: LocalInput
+@export var combat: EvaCombat
 
 @export_group("Velocidad")
 @export var walk_speed := 32.0          ## m/s (el Eva mide ~40 m)
@@ -38,24 +39,37 @@ func _physics_process(delta: float) -> void:
 
 
 func simulate(input: EvaInput, delta: float) -> void:
+	var scale := Vector2.ONE
+	var lunge := 0.0
+	if combat:
+		combat.simulate(input, delta)
+		if combat.in_hitstop():
+			return  # congelado unos frames para que el golpe pese
+		scale = combat.movement_scale()
+		lunge = combat.lunge_speed()
+		velocity += combat.pending_impulse
+		combat.pending_impulse = Vector3.ZERO
+
 	var on_floor := is_on_floor()
 
 	if not on_floor:
 		velocity.y -= _gravity * delta
 		_last_fall_speed = -velocity.y
-	elif input.jump:
+	elif input.jump and scale.x >= 1.0:
 		velocity.y = jump_velocity
 
 	var move_strength := minf(input.move.length(), 1.0)
 	var horizontal := Vector3(velocity.x, 0.0, velocity.z)
 
-	if move_strength > 0.0:
+	if lunge > 0.0:
+		horizontal = -global_basis.z * lunge
+	elif move_strength > 0.0 and scale.x > 0.0:
 		var wish_dir := Vector3(input.move.x, 0.0, input.move.y).rotated(Vector3.UP, input.camera_yaw).normalized()
-		_turn_towards(wish_dir, delta)
+		_turn_towards(wish_dir, delta * scale.y)
 		# Avanza en la dirección que mira; si el input apunta detrás, frena en vez de patinar.
 		var forward := -global_basis.z
 		var alignment := clampf(forward.dot(wish_dir), 0.0, 1.0)
-		var top_speed := sprint_speed if input.sprint else walk_speed
+		var top_speed := (sprint_speed if input.sprint and scale.x >= 1.0 else walk_speed) * scale.x
 		var target := forward * top_speed * move_strength * alignment
 		horizontal = horizontal.move_toward(target, acceleration * delta)
 	else:
@@ -72,6 +86,11 @@ func simulate(input: EvaInput, delta: float) -> void:
 	if is_on_floor() and not _was_on_floor:
 		landed.emit(clampf(_last_fall_speed / 60.0, 0.2, 1.0))
 	_was_on_floor = is_on_floor()
+
+
+## Los golpes que recibe el cuerpo los gestiona el combate.
+func receive_hit(info: HitInfo) -> HitInfo.Result:
+	return combat.receive_hit(info) if combat else HitInfo.Result.HIT
 
 
 func horizontal_speed() -> float:

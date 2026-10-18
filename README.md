@@ -16,9 +16,19 @@ Fanmade de combate de mechas estilo Evangelion. 3D, tercera persona, Godot 4.7.
 | Cámara | Ratón | Stick derecho |
 | Correr | Shift | L3 |
 | Saltar | Espacio | A / Cruz |
+| Corte (combo de 3) | Clic izquierdo | X / Cuadrado |
+| Estocada | Clic derecho | Y / Triángulo |
+| AT Field (mantener) | Q | LB / L1 |
+| Fijar objetivo | Tab / rueda | R3 |
 | Soltar ratón | Esc | |
 
 Corre (Shift) contra un edificio para derribarlo (a partir de 25 m/s).
+
+## Combate (paso 2)
+
+- **Cuchillo**: tres cortes encadenables y una estocada lenta que también sirve de remate del combo. Al atacar, el Eva gira solo hacia el enemigo más cercano.
+- **AT Field**: mantenido bloquea golpes frontales sin daño. Si lo levantas justo antes del impacto (0,18 s) haces **parry**: el Ángel queda aturdido y pierde mucho AT Field.
+- **Ángel de prueba**: en el centro de la plaza. Su AT Field absorbe todo el daño; rómpelo a cortes, con parry o **neutralizándolo** (tu AT Field levantado cerca le drena el suyo). Con el campo roto el núcleo brilla y recibe daño doble durante 5 s. Cada 3 s carga un golpe: se pone rojo antes de golpear.
 
 ## Estructura
 
@@ -27,17 +37,29 @@ scenes/
   main.tscn          ciudad de prueba, cámara y HUD
   eva.tscn           Eva placeholder (cápsula, ~40 m)
 scripts/
+  angel_dummy.tscn   Ángel de prueba
   eva/
     eva_input.gd     snapshot de input de un frame
     local_input.gd   lee teclado/mando y genera EvaInput
     eva_controller.gd  movimiento pesado (sólo lee EvaInput)
-    eva_camera.gd    cámara sobre el hombro con temblor por pisadas
+    eva_camera.gd    cámara sobre el hombro, temblor y fijar objetivo
+    eva_combat.gd    ataques, AT Field/parry, vida y aturdimiento
+    eva_visuals.gd   cuchillo, AT Field y caída (sólo presentación)
+  combat/
+    attack_data.gd   definición de un ataque (datos en data/attacks/*.tres)
+    hit_info.gd      golpe recibido y su resultado
+    hit_spark.gd     chispa de impacto
+  enemies/
+    angel_dummy.gd   Ángel de prueba: AT Field, núcleo, ataque telegrafiado
   world/
     building.gd      edificio que se rompe en bloques con física
     city_generator.gd  cuadrícula de edificios alrededor de una plaza
   ui/debug_hud.gd    velocidad, FPS y controles
+  ui/combat_hud.gd   vida del Eva, vida y AT Field del Ángel
+data/attacks/        valores de cada ataque (editables en el inspector)
 tests/
   smoke_test.gd      prueba sin ventana: el Eva corre y derriba un edificio
+  combat_test.gd     prueba sin ventana: combo, parry, bloqueo y neutralización
 ```
 
 La lógica del Eva nunca lee `Input` directamente: recibe un `EvaInput` por frame. Así el mismo controlador sirve para jugador local, IA y, más adelante, PvP en red.
@@ -48,8 +70,9 @@ Los parámetros de sensación (velocidades, giro, salto, temblor de cámara) est
 
 ```
 godot --headless --path . --script res://tests/smoke_test.gd
+godot --headless --path . --script res://tests/combat_test.gd
 ```
 
 ## Capas de física
 
-1 mundo · 2 eva · 3 escombros · 4 edificios
+1 mundo · 2 eva · 3 escombros · 4 edificios · 5 enemigos

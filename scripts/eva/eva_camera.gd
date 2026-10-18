@@ -11,6 +11,13 @@ extends Node3D
 @export var min_pitch_deg := -60.0
 @export var max_pitch_deg := 35.0
 
+@export_group("Fijar objetivo")
+@export var lock_range := 200.0
+@export var lock_pitch_deg := -22.0         ## más picado para ver al enemigo por encima del Eva
+@export var lock_arm_length := 72.0
+@export var lock_orbit_deg := 22.0          ## gira la cámara a un lado para que el Eva no tape al enemigo
+@export var lock_smoothing := 8.0
+
 @export_group("Temblor")
 @export var max_shake_offset := 4.0          ## metros
 @export var max_shake_angle_deg := 2.5
@@ -18,8 +25,12 @@ extends Node3D
 @export var footstep_trauma := 0.35
 @export var landing_trauma := 0.9
 @export var smash_trauma := 0.8
+@export var hit_trauma := 0.3
+@export var damaged_trauma := 0.7
 
 var yaw := 0.0
+var lock_target: Node3D
+var _free_arm_length := 0.0
 var pitch := deg_to_rad(-12.0)
 var _trauma := 0.0
 var _noise := FastNoiseLite.new()
@@ -34,6 +45,7 @@ func _ready() -> void:
 	# Se mueve en _process leyendo la posición interpolada del Eva, así que no se interpola a sí misma.
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	_noise.frequency = 1.0
+	_free_arm_length = _spring_arm.spring_length
 	if target:
 		global_position = target.global_position + Vector3.UP * height
 		yaw = target.rotation.y
@@ -41,11 +53,17 @@ func _ready() -> void:
 		target.footstep.connect(func(s: float) -> void: add_trauma(footstep_trauma * s))
 		target.landed.connect(func(s: float) -> void: add_trauma(landing_trauma * s))
 		target.smashed.connect(func(s: float) -> void: add_trauma(smash_trauma * s))
+		if target.combat:
+			target.combat.hit_landed.connect(func(_r: HitInfo.Result, _i: HitInfo) -> void: add_trauma(hit_trauma))
+			target.combat.damaged.connect(func(_i: HitInfo) -> void: add_trauma(damaged_trauma))
+			target.combat.guarded.connect(func(_r: HitInfo.Result) -> void: add_trauma(hit_trauma))
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+	if event.is_action_pressed("lock_on"):
+		_toggle_lock()
+	elif event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not lock_target:
 		yaw -= event.relative.x * mouse_sensitivity
 		pitch -= event.relative.y * mouse_sensitivity
 	elif event is InputEventMouseButton and event.pressed:
@@ -54,14 +72,41 @@ func _unhandled_input(event: InputEvent) -> void:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
+func _toggle_lock() -> void:
+	if lock_target:
+		lock_target = null
+		return
+	var best_dist := lock_range
+	for enemy: Node3D in get_tree().get_nodes_in_group("enemigos"):
+		var dist := _distance_to(enemy)
+		if dist < best_dist:
+			lock_target = enemy
+			best_dist = dist
+
+
+func _distance_to(node: Node3D) -> float:
+	return node.global_position.distance_to(target.global_position) if target else INF
+
+
 func add_trauma(amount: float) -> void:
 	_trauma = minf(_trauma + amount, 1.0)
 
 
 func _process(delta: float) -> void:
-	var stick := Input.get_vector("look_left", "look_right", "look_up", "look_down")
-	yaw -= stick.x * stick_sensitivity * delta
-	pitch -= stick.y * stick_sensitivity * delta
+	if lock_target and (not is_instance_valid(lock_target) or _distance_to(lock_target) > lock_range):
+		lock_target = null
+	if lock_target:
+		# Fijado: la cámara mira siempre al objetivo desde detrás del Eva.
+		var to := lock_target.global_position - target.global_position
+		var smooth := 1.0 - exp(-lock_smoothing * delta)
+		yaw = lerp_angle(yaw, atan2(-to.x, -to.z) + deg_to_rad(lock_orbit_deg), smooth)
+		pitch = lerp_angle(pitch, deg_to_rad(lock_pitch_deg), smooth)
+		_spring_arm.spring_length = lerpf(_spring_arm.spring_length, lock_arm_length, smooth)
+	else:
+		var stick := Input.get_vector("look_left", "look_right", "look_up", "look_down")
+		yaw -= stick.x * stick_sensitivity * delta
+		pitch -= stick.y * stick_sensitivity * delta
+		_spring_arm.spring_length = lerpf(_spring_arm.spring_length, _free_arm_length, 1.0 - exp(-lock_smoothing * delta))
 	pitch = clampf(pitch, deg_to_rad(min_pitch_deg), deg_to_rad(max_pitch_deg))
 	rotation = Vector3(pitch, yaw, 0.0)
 

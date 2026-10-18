@@ -7,3 +7,6 @@ var move := Vector2.ZERO        ## x = derecha, y = atrás (como Input.get_vecto
 var camera_yaw := 0.0           ## yaw de la cámara: el movimiento es relativo a ella
 var sprint := false
 var jump := false
+var attack_light := false   ## pulsado este frame
+var attack_heavy := false   ## pulsado este frame
+var at_field := false       ## mantenido

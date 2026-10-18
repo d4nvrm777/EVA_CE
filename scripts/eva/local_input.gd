@@ -11,4 +11,7 @@ func get_input() -> EvaInput:
 	input.camera_yaw = camera_rig.yaw if camera_rig else 0.0
 	input.sprint = Input.is_action_pressed("sprint")
 	input.jump = Input.is_action_just_pressed("jump")
+	input.attack_light = Input.is_action_just_pressed("attack_light")
+	input.attack_heavy = Input.is_action_just_pressed("attack_heavy")
+	input.at_field = Input.is_action_pressed("at_field")
 	return input
