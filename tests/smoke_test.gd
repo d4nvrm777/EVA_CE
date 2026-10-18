@@ -13,6 +13,7 @@ class ScriptedInput extends LocalInput:
 
 func _initialize() -> void:
 	var main: Node = load("res://scenes/main.tscn").instantiate()
+	main.get_node("Angel").free()  # sólo se prueba el movimiento
 	root.add_child(main)
 	await process_frame
 

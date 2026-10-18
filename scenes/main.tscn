@@ -4,7 +4,7 @@
 [ext_resource type="Script" path="res://scripts/eva/eva_camera.gd" id="2_cam"]
 [ext_resource type="Script" path="res://scripts/world/city_generator.gd" id="3_city"]
 [ext_resource type="Script" path="res://scripts/ui/debug_hud.gd" id="4_hud"]
-[ext_resource type="PackedScene" path="res://scenes/angel_dummy.tscn" id="5_angel"]
+[ext_resource type="PackedScene" path="res://scenes/angel_sachiel.tscn" id="5_angel"]
 [ext_resource type="Script" path="res://scripts/ui/combat_hud.gd" id="6_combat_hud"]
 
 [sub_resource type="ProceduralSkyMaterial" id="Sky_mat"]
@@ -63,8 +63,8 @@ script = ExtResource("3_city")
 [node name="Input" parent="Eva" node_paths=PackedStringArray("camera_rig")]
 camera_rig = NodePath("../../CameraRig")
 
-[node name="AngelDummy" parent="." instance=ExtResource("5_angel")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, -70)
+[node name="Angel" parent="." instance=ExtResource("5_angel")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, -160)
 
 [node name="CameraRig" type="Node3D" parent="." node_paths=PackedStringArray("target")]
 script = ExtResource("2_cam")
@@ -100,5 +100,5 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("6_combat_hud")
 eva = NodePath("../../Eva")
-angel = NodePath("../../AngelDummy")
+angel = NodePath("../../Angel")
 camera_rig = NodePath("../../CameraRig")

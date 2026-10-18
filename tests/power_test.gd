@@ -22,11 +22,18 @@ var failures: Array[String] = []
 
 func _initialize() -> void:
 	var main: Node = load("res://scenes/main.tscn").instantiate()
+	# Estas pruebas usan el Ángel de prueba en lugar de Sachiel.
+	var sachiel := main.get_node("Angel")
+	main.remove_child(sachiel)
+	sachiel.free()
+	angel = load("res://scenes/angel_dummy.tscn").instantiate()
+	angel.transform = Transform3D(Basis(Vector3.UP, PI), Vector3(0, 0, -70))
+	main.add_child(angel)
+	main.get_node("HUD/CombatHUD").angel = angel
 	root.add_child(main)
 	await process_frame
 	await physics_frame
 	eva = main.get_node("Eva")
-	angel = main.get_node("AngelDummy")
 	angel.attacks_enabled = false
 	power = eva.power
 	eva.add_child(scripted)

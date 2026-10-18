@@ -11,6 +11,7 @@ var knockback := Vector3.ZERO
 var point := Vector3.ZERO
 var hitstop := 0.0
 var stagger := 0.0
+var unblockable := false     ## agarres: el AT Field no lo para
 
 
 ## true si el golpe viene de delante de `defender` (dentro de ±`half_angle_deg`).

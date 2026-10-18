@@ -1,8 +1,8 @@
 extends Control
-## Barras de vida del Eva y vida / AT Field del Ángel de prueba.
+## Barras de vida del Eva y vida / AT Field del Ángel.
 
 @export var eva: EvaController
-@export var angel: AngelDummy
+@export var angel: Angel
 @export var camera_rig: EvaCamera
 
 const EVA_STATE_NAMES := {
@@ -66,11 +66,13 @@ func _process(_delta: float) -> void:
 		_angel_hp.value = angel.health / angel.max_health * 100.0
 		_angel_at.value = angel.at / angel.max_at * 100.0
 		var status := "NÚCLEO EXPUESTO" if angel.broken else "AT FIELD"
-		if angel.state == AngelDummy.State.DEFEATED:
+		if angel.state == Angel.State.DEFEATED:
 			status = "DERROTADO"
+		elif angel is AngelSachiel and angel.phase2:
+			status += "  ·  FASE 2"
 		if camera_rig and camera_rig.lock_target == angel:
 			status += "  ·  FIJADO"
-		_angel_label.text = "ÁNGEL DE PRUEBA  ·  " + status
+		_angel_label.text = angel.display_name + "  ·  " + status
 
 
 func _update_power(p: EvaPower) -> void:
