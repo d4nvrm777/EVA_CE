@@ -5,25 +5,26 @@ extends CharacterBody3D
 
 signal footstep(strength: float)
 signal landed(strength: float)
+signal smashed(strength: float)
 
 @export var input_source: LocalInput
 
 @export_group("Velocidad")
-@export var walk_speed := 14.0          ## m/s (el Eva mide ~40 m)
-@export var sprint_speed := 30.0
-@export var acceleration := 7.0         ## m/s²
-@export var deceleration := 10.0
-@export var turn_speed_deg := 110.0     ## grados por segundo
+@export var walk_speed := 32.0          ## m/s (el Eva mide ~40 m)
+@export var sprint_speed := 65.0
+@export var acceleration := 55.0        ## m/s²
+@export var deceleration := 70.0
+@export var turn_speed_deg := 420.0     ## grados por segundo
 
 @export_group("Salto y gravedad")
-@export var jump_velocity := 22.0
-@export var gravity_scale := 2.2
+@export var jump_velocity := 38.0
+@export var gravity_scale := 6.0
 
 @export_group("Pasos")
-@export var stride_length := 16.0       ## metros entre pisadas
+@export var stride_length := 22.0       ## metros entre pisadas
 
 @export_group("Choques")
-@export var building_break_speed := 18.0  ## velocidad mínima para derribar un edificio
+@export var building_break_speed := 25.0  ## velocidad mínima para derribar un edificio
 
 var _stride_progress := 0.0
 var _was_on_floor := true
@@ -69,7 +70,7 @@ func simulate(input: EvaInput, delta: float) -> void:
 	_handle_footsteps(on_floor, horizontal.length(), delta)
 
 	if is_on_floor() and not _was_on_floor:
-		landed.emit(clampf(_last_fall_speed / 40.0, 0.0, 1.0))
+		landed.emit(clampf(_last_fall_speed / 60.0, 0.2, 1.0))
 	_was_on_floor = is_on_floor()
 
 
@@ -91,10 +92,10 @@ func _handle_impacts(pre_slide_velocity: Vector3) -> void:
 	for i in get_slide_collision_count():
 		var collision := get_slide_collision(i)
 		var collider := collision.get_collider()
-		if collider and collider.has_method("take_impact"):
-			collider.take_impact(pre_slide_velocity, collision.get_position())
+		if collider and collider.has_method("take_impact") and collider.take_impact(pre_slide_velocity, collision.get_position()):
+			smashed.emit(clampf(impact_speed / sprint_speed, 0.5, 1.0))
 			# El choque no te frena del todo: atraviesas el edificio que se derrumba.
-			velocity = pre_slide_velocity * 0.6
+			velocity = pre_slide_velocity * 0.85
 
 
 func _handle_footsteps(on_floor: bool, speed: float, delta: float) -> void:

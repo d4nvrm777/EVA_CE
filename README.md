@@ -18,7 +18,7 @@ Fanmade de combate de mechas estilo Evangelion. 3D, tercera persona, Godot 4.7.
 | Saltar | Espacio | A / Cruz |
 | Soltar ratón | Esc | |
 
-Corre (Shift) contra un edificio para derribarlo.
+Corre (Shift) contra un edificio para derribarlo (a partir de 25 m/s).
 
 ## Estructura
 
